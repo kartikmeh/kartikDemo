@@ -1,0 +1,51 @@
+pipeline{
+	agent any
+
+	stages{
+		stage ('Compile Stage'){
+
+			steps {
+				withMaven(maven : 'default'){
+					sh 'mvn clean compile'
+				}
+			}
+		}
+		stage ('Testing Stage'){
+
+			steps {
+				withMaven(maven : 'default'){
+					sh 'mvn test'
+				}
+			}
+		}
+		
+		stage ('SonarQube Analysis'){
+			steps{
+				withSonarQubeEnv('sonarqube') {
+				sh 'mvn org.sonarsource.scanner.maven:sonar-maven-plugin:3.2:sonar'
+									}
+							}
+					}
+		stage ('Build Stage'){
+
+			steps {
+				withMaven(maven : 'default'){
+					sh 'mvn install'
+				}
+			}
+		}			
+		stage ('Artifactory Deploy'){
+			steps{
+				script {
+				def server = Artifactory.server('default')
+				def rtMaven = Artifactory.newMavenBuild()
+				rtMaven.deployer server: server, releaseRepo: 'kartik_r', snapshotRepo: 'kartik_r'
+				rtMaven.tool = 'default'
+				def buildInfo = rtMaven.run pom: 'pom.xml', goals: 'install'
+				server.publishBuildInfo buildInfo
+						}
+					}
+				}
+		
+}
+}

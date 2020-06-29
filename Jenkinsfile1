@@ -1,0 +1,60 @@
+pipeline{
+agent {label 'master'}
+stages{
+
+        stage ('build stage'){
+                when {
+                        anyOf{
+                                 branch 'master'; branch 'prod'; branch 'dev'
+                        }
+                }
+                steps{
+                                sh 'mvn clean install'
+
+                }
+        }
+
+        stage ('Artifactory Stage'){
+                when {
+                        anyOf{
+                                 branch 'master'; branch 'prod'; branch 'dev'
+                        }
+                }
+                steps{
+                        script {
+                                def server = Artifactory.server('Artifactory')
+                                        def rtMaven = Artifactory.newMavenBuild()
+                                        rtMaven.deployer server: server, releaseRepo: 'a', snapshotRepo: 'd'
+                                        rtMaven.tool = 'Maven3'
+                                        def buildInfo = rtMaven.run pom: 'pom.xml', goals: 'install'
+                                        server.publishBuildInfo buildInfo
+                                }
+
+                }
+        }
+
+        stage ('Docker Build Stage'){
+                when {
+                        anyOf{
+                                 branch 'master'; branch 'prod'; branch 'dev'
+                        }
+                }
+                steps{
+                        sh 'docker build -t i_demo /d/d/'
+
+                }
+        }
+
+        stage ('Docker Run Stage'){
+                when {
+                        anyOf{
+                                 branch 'master'; branch 'prod'; branch 'dev'
+                        }
+                }
+                steps{
+                        sh 'docker run --name cdemo -d -p 1010:1010 i_demo'
+
+                }
+        }
+}
+}
