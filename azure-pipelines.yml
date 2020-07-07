@@ -20,7 +20,7 @@ steps:
     sonarQubeRunAnalysis: true
     publishJUnitResults: true
     testResultsFiles: '**/surefire-reports/TEST-*.xml'
-    goals: 'package'
+    goals: 'clean install'
 
 
     
