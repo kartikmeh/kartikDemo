@@ -33,6 +33,10 @@ steps:
     TargetFolder: '$(build.artifactstagingdirectory)'
   condition: succeededOrFailed()
   
+- task: CmdLine@2
+  inputs:
+    script: './jfrog rt $(build.artifactstagingdirectory)target/*.war azureDevOps-Snapshot/com/nagarro/1.0.0-SNAPSHOT/'
+
 - task: Docker@2
   inputs:
     command: 'buildAndPush'
